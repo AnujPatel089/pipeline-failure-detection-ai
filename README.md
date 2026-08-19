@@ -1,6 +1,20 @@
 # Pipeline Failure Detection AI
 
-Pipeline Failure Detection AI is an end-to-end two-stage machine-learning system for SCADA telemetry. It detects abnormal pipeline operating conditions and, when a failure is identified, classifies the likely fault as blockage, degradation, leak, or surge. A shared leakage-safe inference layer powers both an interactive Streamlit monitoring dashboard and a FastAPI inference service.
+[![CI](https://github.com/AnujPatel089/pipeline-failure-detection-ai/actions/workflows/ci.yml/badge.svg)](https://github.com/AnujPatel089/pipeline-failure-detection-ai/actions/workflows/ci.yml)
+
+Pipeline Failure Detection AI is a two-stage machine-learning system for SCADA telemetry monitoring and replay. It first detects abnormal pipeline conditions, then classifies detected faults as blockage, degradation, leak, or surge. A shared inference layer powers both the FastAPI service and the three-workspace Streamlit dashboard, while leakage-safe features and group-aware validation keep evaluation boundaries credible.
+
+## Project Highlights
+
+- Two-stage failure detection and conditional fault classification.
+- Leakage-safe design restricted to eight approved telemetry features.
+- Group-aware evaluation that prevents pipeline segments from crossing split boundaries.
+- Interactive Streamlit UI with three operational workspaces and four themes.
+- FastAPI endpoints for single and batch inference.
+- Standard (`0.50`) and High Sensitivity (`0.30`) operating thresholds.
+- 85 automated tests with deterministic SCADA-like fixtures.
+- GitHub Actions CI for every push and pull request.
+- Raw Kaggle data excluded from the repository and ordinary test suite.
 
 ## What It Does
 
@@ -12,46 +26,42 @@ SCADA telemetry → input validation → binary failure detection → threshold 
                                                                      FastAPI / Streamlit
 ```
 
-- Replays dataset observations by pipeline segment in chronological order.
-- Detects normal versus abnormal operation using eight SCADA features.
-- Runs fault classification only when the active threshold declares an abnormal condition.
-- Supports standard and high-sensitivity monitoring modes.
-- Exposes single and batch inference through FastAPI.
-- Preserves group-aware evaluation so segments never cross train/test boundaries.
+The application replays stored observations by pipeline segment, validates telemetry, predicts normal or abnormal operation, and invokes fault classification only for an abnormal result. It supports two monitoring modes, exposes structured API predictions, and presents operational context in the dashboard. This is real-time-style replay, not a live industrial SCADA connection.
 
-## Quick Start
+## Application Preview
 
-Install the project dependencies:
+Real application screenshots have not yet been added. The following files are reserved for future captures in `docs/images/`:
 
-```bash
-python -m pip install -r requirements.txt
-```
+- `dashboard-overview.png` — Operations Overview
+- `dashboard-alert.png` — Critical Alert State
+- `investigation-view.png` — Telemetry Investigation
+- `api-swagger.png` — FastAPI Swagger UI
 
-Launch the dashboard:
+<!-- Activate these sections only after the corresponding real screenshots exist.
 
-```bash
-python -m streamlit run app.py
-```
+### Operations Overview
 
-Or start the API and open `http://127.0.0.1:8000/docs`:
+![Operations Overview](docs/images/dashboard-overview.png)
 
-```bash
-python -m uvicorn api.main:app --reload
-```
+### Critical Alert State
 
-Run the automated checks:
+![Critical Alert](docs/images/dashboard-alert.png)
 
-```bash
-python -m compileall src api
-pytest -q
-```
+### Telemetry Investigation
+
+![Telemetry Investigation](docs/images/investigation-view.png)
+
+### FastAPI
+
+![FastAPI Swagger UI](docs/images/api-swagger.png)
+-->
 
 ## System Architecture
 
 ```mermaid
 flowchart TD
     A[SCADA Telemetry] --> B[Input Validation]
-    B --> C[Prediction Service]
+    B --> C[Shared Inference Service]
     C --> D[Binary Failure Detector]
     D --> E[Threshold Policy]
     E -->|Normal| F[Healthy]
@@ -63,7 +73,7 @@ flowchart TD
     I --> K[Streamlit]
 ```
 
-Both fitted artifacts contain preprocessing and classification in one scikit-learn pipeline. Models are loaded once per application lifecycle, and presentation layers call the shared inference service rather than reproducing transformations or prediction logic.
+Both fitted artifacts contain preprocessing and classification in one scikit-learn pipeline. Models are loaded once per application lifecycle, and both presentation layers use shared inference rather than duplicating transformations or prediction logic.
 
 ## Model Performance
 
@@ -78,7 +88,7 @@ Official held-out pipeline segments:
 | F1 | 90.8% |
 | PR-AUC | 97.2% |
 
-On the official held-out segment set, the selected binary model detected 54 of 58 failures, with 4 false negatives and 7 false positives.
+The held-out evaluation detected 54 of 58 failures, with 4 false negatives and 7 false positives.
 
 Repeated segment-group validation:
 
@@ -95,28 +105,26 @@ Repeated segment-group validation:
 | Official balanced accuracy | 96.9% |
 | Group-aware CV macro F1 | 97.2% ± 2.0% |
 
-The weakest held-out fault class was blockage, with 87.5% recall. The only held-out fault-classification error was a blockage observation classified as a leak.
-
-Detailed comparisons, validation summaries, error analyses, feature importance, and plots are retained under `artifacts/` as portfolio evidence. These results come from a small simulated-style dataset and are not production-performance claims.
+The weakest held-out class was blockage, with 87.5% recall. The only held-out fault-classification error was a blockage observation classified as a leak. Detailed validation summaries, error analyses, feature importance, and plots are retained under `artifacts/`. These results come from a small simulated-style dataset and are not production-performance claims.
 
 ## Leakage Prevention
 
-The predictive inputs are:
+The approved predictive inputs are:
 
 ```text
 pressure, flow_rate, temperature, valve_status,
 pump_state, pump_speed, compressor_state, energy_consumption
 ```
 
-The following are forbidden as model features:
+The following fields are forbidden as model features:
 
-- `event_type`: perfectly maps normal events to target 0 and fault events to target 1.
-- `alarm_triggered`: strongly encodes an existing alarm outcome and creates severe leakage risk.
-- `target`: the prediction label.
+- `target`: prediction label.
+- `event_type`: directly encodes normal and fault categories.
+- `alarm_triggered`: strongly encodes an existing alarm outcome.
 - `timestamp`: ordering metadata only.
 - `segment_id`: grouping and response metadata only.
 
-Pydantic rejects labels and alarm fields at the API boundary. Dashboard evaluation mode attaches ground truth only after prediction. Automated tests verify that inference receives exactly the eight approved fields.
+Pydantic rejects labels and alarm fields at the API boundary. Dashboard evaluation mode attaches ground truth only after prediction. Automated tests verify that inference receives exactly the eight approved fields, and group-aware splits prevent segments from crossing train/test boundaries.
 
 ## Monitoring Modes
 
@@ -129,21 +137,17 @@ Threshold selection used out-of-fold training predictions rather than final test
 
 ## Dashboard
 
-```bash
-python -m streamlit run app.py
-```
+The Streamlit dashboard has three workspaces:
 
-The dashboard is organized into three workspaces — Operations Overview, Telemetry & Investigation, and Model & System — sharing one navigation-first sidebar and session state. It provides segment replay, timestamp navigation, SCADA trends, failure and fault predictions, alert severity, standard/high-sensitivity modes, session history, and an optional evaluation-only ground-truth panel. It replays stored data and does not imply a live industrial SCADA connection. Includes selectable Industrial Slate, Deep Navy, Light Operations, and Steel Blue interface themes.
+1. Operations Overview
+2. Telemetry & Investigation
+3. Model & System
+
+They share navigation and session state for segment replay, timestamp position, monitoring mode, prediction history, and theme selection. Available themes are Industrial Slate, Deep Navy, Light Operations, and Steel Blue. An optional evaluation panel shows ground truth only after inference.
 
 ## FastAPI
 
-```bash
-python -m uvicorn api.main:app --reload
-```
-
-Interactive documentation: `http://127.0.0.1:8000/docs`
-
-Endpoints:
+Interactive documentation is available at `http://127.0.0.1:8000/docs` and ReDoc at `http://127.0.0.1:8000/redoc`.
 
 - `GET /health` — process liveness
 - `GET /ready` — model-service readiness
@@ -153,40 +157,61 @@ Endpoints:
 
 Every response carries an `X-Request-ID`. Application logs are structured JSON and avoid telemetry payloads, model contents, and local filesystem paths.
 
-## Tests
+## Quick Start
+
+Install dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Launch the dashboard:
+
+```bash
+python -m streamlit run app.py
+```
+
+Start the API:
+
+```bash
+python -m uvicorn api.main:app --reload
+```
+
+Run the automated checks:
 
 ```bash
 python -m compileall src api
-pytest -q
+python -m pytest -q
 ```
 
-The ordinary suite uses deterministic SCADA-like fixtures and the committed joblib pipelines. It validates software behavior and real model integration without reading `data/raw/` or redistributing the Kaggle dataset.
+The ordinary test suite is self-contained and does not require the external Kaggle dataset.
 
-## Full Dataset Verification
+## Tests
 
-The external dataset is intentionally separate from CI. Place the SCADA Pipeline Operations Dataset CSV under:
+The 85-test suite covers validation, leakage boundaries, saved-model integration, inference behavior, FastAPI, operational quality, and Streamlit dashboard behavior. Dashboard tests use the deterministic `scada_frame` fixture: 250 schema-valid SCADA-like observations across 50 segments. Tests do not read `data/raw/` or redistribute Kaggle data.
 
-```text
-data/raw/
-```
+## CI
 
-Then run:
+GitHub Actions validates the project on every push and pull request using Python 3.11. The workflow:
+
+1. Checks out the repository.
+2. Installs dependencies from `requirements.txt`.
+3. Compiles `src` and `api` with `python -m compileall src api`.
+4. Runs all 85 tests with `python -m pytest -q`.
+
+The CI suite is self-contained and does not require the external Kaggle dataset, Kaggle credentials, or a dataset download. Dashboard tests use deterministic SCADA-like fixtures. CI validates the codebase; it does not perform deployment.
+
+## Dataset
+
+This project uses the [SCADA Pipeline Operations Dataset](https://www.kaggle.com/datasets/zara2099/scada-pipeline-operations-dataset) from Kaggle. Raw data is not redistributed in this repository. The external dataset is needed only for full dataset verification and real-data replay where applicable; users should obtain it from Kaggle and review the applicable terms there. No dataset license is asserted by this project.
+
+For full dataset verification, place the CSV under `data/raw/`, then run:
 
 ```bash
 python -m src.full_dataset_verification
 ```
 
-This verifies schema, 1,000 rows, 50 segments, 17 timestamps, target/event distributions, and compatibility with both saved pipelines. It does not retrain either model.
-
-## CI
-
-`.github/workflows/ci.yml` configures GitHub Actions to install direct dependencies, compile `src` and `api`, and run the complete pytest suite on pushes and pull requests. CI is self-contained: it needs the source, metadata, and two compact model artifacts, but no Kaggle credentials, secrets, or raw dataset download.
-
-The workflow is configured locally; this README does not claim it has run on GitHub yet.
-
-## Dataset
-
-This project uses the [**SCADA Pipeline Operations Dataset**](https://www.kaggle.com/datasets/zara2099/scada-pipeline-operations-dataset) from Kaggle. The raw dataset is not redistributed in this repository. Users should obtain it from its Kaggle dataset page and review the applicable terms there; no explicit dataset license is documented locally.
+This checks schema, 1,000 rows, 50 segments, 17 timestamps, target/event distributions, and compatibility with both saved pipelines. It does not retrain either model.
 
 ## Project Structure
 
@@ -198,20 +223,20 @@ docs/images/               Reserved for future real screenshots
 models/                    Two fitted pipelines and safe metadata
 src/                       Training, validation, inference, and services
 tests/                     Deterministic software and model integration tests
-.github/workflows/ci.yml   Compile and pytest workflow
+.github/workflows/ci.yml   Python 3.11 compile and pytest workflow
 app.py                     Streamlit dashboard
 requirements.txt           Direct project dependencies
 ```
 
 ## Limitations
 
-- 1,000 observations and only 306 abnormal samples.
-- 50 segments and 17 timestamps, representing roughly 17 minutes.
-- Simulated/synthetic-style characteristics and unusually separable telemetry patterns.
-- Strong results may partly reflect dataset-generation artifacts.
-- No live industrial SCADA integration or prospective field validation.
-- No authentication, production rate limiting, or distributed serving layer.
-- This is an ML portfolio prototype, not an operational safety system.
+- The dataset contains 1,000 observations, including 306 abnormal records.
+- It covers 50 segments and 17 timestamps—approximately 17 minutes of observations.
+- The data has simulated/synthetic-style characteristics and unusually separable telemetry.
+- Strong results may partly reflect data-generation artifacts.
+- There is no live industrial SCADA integration or prospective field validation.
+- There is no authentication, production rate limiting, or distributed serving layer.
+- This is a portfolio prototype, not an operational safety system.
 
 ## Tech Stack
 
