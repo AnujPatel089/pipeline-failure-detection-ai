@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+import pytest
 from streamlit.testing.v1 import AppTest
 
 from src.config import MODEL_FEATURES
@@ -11,22 +12,32 @@ from src.dashboard_styles import DEFAULT_THEME, THEME_NAMES, get_theme
 _APP_PATH = Path(__file__).resolve().parents[1] / "app.py"
 
 
-def _run_app() -> AppTest:
+def _run_app(monkeypatch: pytest.MonkeyPatch, scada_frame: pd.DataFrame) -> AppTest:
+    monkeypatch.setattr(
+        "src.dashboard_service.load_dataset",
+        lambda: (scada_frame.copy(), Path("synthetic_scada_fixture.csv")),
+    )
     app = AppTest.from_file(str(_APP_PATH), default_timeout=60)
     app.run()
     return app
 
 
-def test_exactly_three_pages_with_operations_default() -> None:
+def test_exactly_three_pages_with_operations_default(
+    monkeypatch: pytest.MonkeyPatch,
+    scada_frame: pd.DataFrame,
+) -> None:
     assert PAGE_NAMES == ["Operations Overview", "Telemetry & Investigation", "Model & System"]
     assert DEFAULT_PAGE == "Operations Overview"
-    app = _run_app()
+    app = _run_app(monkeypatch, scada_frame)
     assert not app.exception
     assert app.sidebar.radio[0].value == "Operations Overview"
 
 
-def test_navigation_preserves_segment_position_mode_theme() -> None:
-    app = _run_app()
+def test_navigation_preserves_segment_position_mode_theme(
+    monkeypatch: pytest.MonkeyPatch,
+    scada_frame: pd.DataFrame,
+) -> None:
+    app = _run_app(monkeypatch, scada_frame)
     app.main.selectbox[0].select(5)  # segment
     app.run()
     app.main.selectbox[2].select("High Sensitivity")  # monitoring mode
@@ -50,8 +61,11 @@ def test_navigation_preserves_segment_position_mode_theme() -> None:
     assert app.session_state["dashboard_theme"] == theme_before
 
 
-def test_navigation_preserves_prediction_history() -> None:
-    app = _run_app()
+def test_navigation_preserves_prediction_history(
+    monkeypatch: pytest.MonkeyPatch,
+    scada_frame: pd.DataFrame,
+) -> None:
+    app = _run_app(monkeypatch, scada_frame)
     app.main.selectbox[0].select(43)
     app.run()
     history_length = len(app.session_state["prediction_history"])
