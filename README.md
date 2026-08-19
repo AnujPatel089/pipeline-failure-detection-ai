@@ -1,6 +1,6 @@
 # Pipeline Failure Detection AI
 
-Pipeline Failure Detection AI is a two-stage machine-learning portfolio system for SCADA telemetry. It first detects abnormal pipeline operation, then classifies abnormal observations as blockage, degradation, leak, or surge. The same leakage-safe inference path powers a Streamlit monitoring dashboard and a FastAPI service.
+Pipeline Failure Detection AI is an end-to-end two-stage machine-learning system for SCADA telemetry. It detects abnormal pipeline operating conditions and, when a failure is identified, classifies the likely fault as blockage, degradation, leak, or surge. A shared leakage-safe inference layer powers both an interactive Streamlit monitoring dashboard and a FastAPI inference service.
 
 ## What It Does
 
@@ -12,12 +12,39 @@ SCADA telemetry → input validation → binary failure detection → threshold 
                                                                      FastAPI / Streamlit
 ```
 
-- Replays real observations by pipeline segment in chronological order.
+- Replays dataset observations by pipeline segment in chronological order.
 - Detects normal versus abnormal operation using eight SCADA features.
 - Runs fault classification only when the active threshold declares an abnormal condition.
 - Supports standard and high-sensitivity monitoring modes.
 - Exposes single and batch inference through FastAPI.
 - Preserves group-aware evaluation so segments never cross train/test boundaries.
+
+## Quick Start
+
+Install the project dependencies:
+
+```bash
+python -m pip install -r requirements.txt
+```
+
+Launch the dashboard:
+
+```bash
+python -m streamlit run app.py
+```
+
+Or start the API and open `http://127.0.0.1:8000/docs`:
+
+```bash
+python -m uvicorn api.main:app --reload
+```
+
+Run the automated checks:
+
+```bash
+python -m compileall src api
+pytest -q
+```
 
 ## System Architecture
 
@@ -51,6 +78,8 @@ Official held-out pipeline segments:
 | F1 | 90.8% |
 | PR-AUC | 97.2% |
 
+On the official held-out segment set, the selected binary model detected 54 of 58 failures, with 4 false negatives and 7 false positives.
+
 Repeated segment-group validation:
 
 | Metric | Mean ± standard deviation |
@@ -65,6 +94,8 @@ Repeated segment-group validation:
 | Official held-out macro F1 | 97.3% |
 | Official balanced accuracy | 96.9% |
 | Group-aware CV macro F1 | 97.2% ± 2.0% |
+
+The weakest held-out fault class was blockage, with 87.5% recall. The only held-out fault-classification error was a blockage observation classified as a leak.
 
 Detailed comparisons, validation summaries, error analyses, feature importance, and plots are retained under `artifacts/` as portfolio evidence. These results come from a small simulated-style dataset and are not production-performance claims.
 
@@ -89,25 +120,25 @@ Pydantic rejects labels and alarm fields at the API boundary. Dashboard evaluati
 
 ## Monitoring Modes
 
-| Mode | Threshold | Validation tradeoff |
-|---|---:|---|
-| Standard | 0.50 | Higher precision and fewer false alerts |
-| High Sensitivity | 0.30 | Higher recall and substantially more false alerts |
+| Mode | Threshold | Precision | Recall | Tradeoff |
+|---|---:|---:|---:|---|
+| Standard | 0.50 | 92.5% | 89.5% | Fewer false alerts |
+| High Sensitivity | 0.30 | 76.4% | 95.2% | More failures detected, more false alerts |
 
-Out-of-fold analysis measured 89.5% recall and 92.5% precision at 0.50, compared with 95.2% recall and 76.4% precision at 0.30. The alternate mode changes only the decision threshold; it does not modify the saved model.
+Threshold selection used out-of-fold training predictions rather than final test labels. The alternate mode changes only the decision threshold; it does not modify the saved model.
 
 ## Dashboard
 
 ```bash
-streamlit run app.py
+python -m streamlit run app.py
 ```
 
-The dashboard provides segment replay, timestamp navigation, SCADA trends, failure and fault predictions, alert severity, standard/high-sensitivity modes, session history, and an optional evaluation-only ground-truth panel. It replays stored data and does not imply a live industrial SCADA connection.
+The dashboard is organized into three workspaces — Operations Overview, Telemetry & Investigation, and Model & System — sharing one navigation-first sidebar and session state. It provides segment replay, timestamp navigation, SCADA trends, failure and fault predictions, alert severity, standard/high-sensitivity modes, session history, and an optional evaluation-only ground-truth panel. It replays stored data and does not imply a live industrial SCADA connection. Includes selectable Industrial Slate, Deep Navy, Light Operations, and Steel Blue interface themes.
 
 ## FastAPI
 
 ```bash
-uvicorn api.main:app --reload
+python -m uvicorn api.main:app --reload
 ```
 
 Interactive documentation: `http://127.0.0.1:8000/docs`
@@ -155,7 +186,7 @@ The workflow is configured locally; this README does not claim it has run on Git
 
 ## Dataset
 
-This project uses the **SCADA Pipeline Operations Dataset** from Kaggle. The raw dataset is not redistributed in this repository. Users should obtain it from its Kaggle dataset page and review the applicable terms there; no explicit dataset license is documented locally.
+This project uses the [**SCADA Pipeline Operations Dataset**](https://www.kaggle.com/datasets/zara2099/scada-pipeline-operations-dataset) from Kaggle. The raw dataset is not redistributed in this repository. Users should obtain it from its Kaggle dataset page and review the applicable terms there; no explicit dataset license is documented locally.
 
 ## Project Structure
 
