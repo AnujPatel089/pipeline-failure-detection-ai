@@ -1,0 +1,35 @@
+{
+  "artifact_version": "1.0.0",
+  "binary_model": {
+    "task": "normal_vs_abnormal",
+    "algorithm": "RandomForestClassifier",
+    "features": [
+      "pressure",
+      "flow_rate",
+      "temperature",
+      "pump_speed",
+      "energy_consumption",
+      "valve_status",
+      "pump_state",
+      "compressor_state"
+    ],
+    "standard_threshold": 0.5,
+    "high_sensitivity_threshold": 0.3
+  },
+  "fault_classifier": {
+    "task": "fault_classification",
+    "algorithm": "RandomForestClassifier",
+    "classes": [
+      "blockage",
+      "degradation",
+      "leak",
+      "surge"
+    ]
+  },
+  "dataset": {
+    "rows": 1000,
+    "segments": 50,
+    "timestamps": 17,
+    "abnormal_rows": 306
+  }
+}

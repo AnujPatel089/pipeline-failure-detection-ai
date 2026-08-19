@@ -1,0 +1,30 @@
+{
+  "scope": "Official abnormal training partition only; final fault test segments untouched.",
+  "fold_count": 5,
+  "metrics": {
+    "macro_f1": {
+      "mean": 0.971679584086292,
+      "std": 0.019778484115766843,
+      "min": 0.9489692218350754,
+      "max": 1.0
+    },
+    "balanced_accuracy": {
+      "mean": 0.9768181818181818,
+      "std": 0.016498810375346847,
+      "min": 0.9636363636363636,
+      "max": 1.0
+    },
+    "macro_recall": {
+      "mean": 0.9768181818181818,
+      "std": 0.016498810375346847,
+      "min": 0.9636363636363636,
+      "max": 1.0
+    },
+    "weakest_class_recall": {
+      "mean": 0.9254545454545454,
+      "std": 0.05277427372254543,
+      "min": 0.8636363636363636,
+      "max": 1.0
+    }
+  }
+}

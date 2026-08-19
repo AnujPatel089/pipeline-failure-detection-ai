@@ -1,0 +1,6 @@
+{
+  "official_test_untouched_during_cv_and_threshold_selection": true,
+  "selected_validation_threshold": 0.3,
+  "threshold_selection_reason": "Highest validation precision among thresholds with at least 95% failure recall.",
+  "default_threshold_retained_in_saved_model": true
+}

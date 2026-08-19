@@ -1,0 +1,85 @@
+# -----------------------------
+# Python
+# -----------------------------
+__pycache__/
+.pytest_cache/
+*.py[cod]
+*.pyo
+*.pyd
+
+# -----------------------------
+# Virtual environments
+# -----------------------------
+.venv/
+venv/
+env/
+
+# -----------------------------
+# macOS / External Drive metadata
+# -----------------------------
+.DS_Store
+._*
+
+# -----------------------------
+# VS Code
+# -----------------------------
+.vscode/
+
+# -----------------------------
+# Jupyter
+# -----------------------------
+.ipynb_checkpoints/
+
+# -----------------------------
+# Environment variables / secrets
+# -----------------------------
+.env
+.env.*
+
+# -----------------------------
+# Raw and processed datasets
+# Do NOT upload external raw datasets to GitHub
+# -----------------------------
+data/raw/*
+data/processed/*
+
+# Keep empty data folders in Git
+!data/raw/.gitkeep
+!data/processed/.gitkeep
+
+# -----------------------------
+# Downloaded external repositories/files
+# -----------------------------
+external/
+
+# -----------------------------
+# Trained models
+# -----------------------------
+models/*.pkl
+models/*.joblib
+models/*.h5
+models/*.keras
+models/*.pt
+models/*.pth
+
+# Keep models directory
+!models/.gitkeep
+!models/model_metadata.json
+!models/best_binary_failure_model.joblib
+!models/best_fault_classifier.joblib
+
+# Temporary/debug artifacts only; final evaluation evidence is tracked.
+artifacts/tmp/
+artifacts/debug/
+artifacts/**/*.tmp
+
+# -----------------------------
+# Logs
+# -----------------------------
+*.log
+
+# -----------------------------
+# Temporary files
+# -----------------------------
+*.tmp
+*.temp

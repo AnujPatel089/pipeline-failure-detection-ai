@@ -1,0 +1,46 @@
+{
+  "diagnostic_only": true,
+  "scope": "Official training partition only; final held-out segments were untouched.",
+  "limitation": "Pipeline segments repeat across timestamps, so this isolates time but not segment identity. Only 17 one-minute timestamps exist, which cannot establish long-term generalization.",
+  "train_timestamp_range": [
+    "2024-01-01T00:00:00",
+    "2024-01-01T00:12:00"
+  ],
+  "test_timestamp_range": [
+    "2024-01-01T00:13:00",
+    "2024-01-01T00:16:00"
+  ],
+  "train_rows": 637,
+  "test_rows": 172,
+  "train_class_distribution": {
+    "0": 438,
+    "1": 199
+  },
+  "test_class_distribution": {
+    "0": 123,
+    "1": 49
+  },
+  "overlapping_segment_count": 40,
+  "metrics": {
+    "accuracy": 0.9418604651162791,
+    "balanced_accuracy": 0.9163763066202091,
+    "failure_precision": 0.9333333333333333,
+    "failure_recall": 0.8571428571428571,
+    "f1": 0.8936170212765957,
+    "roc_auc": 0.98456943753111,
+    "pr_auc": 0.9701129261234593,
+    "false_negatives": 7,
+    "false_positives": 3,
+    "false_positive_rate": 0.024390243902439025,
+    "confusion_matrix": [
+      [
+        120,
+        3
+      ],
+      [
+        7,
+        42
+      ]
+    ]
+  }
+}

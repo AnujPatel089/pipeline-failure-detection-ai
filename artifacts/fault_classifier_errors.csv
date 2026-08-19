@@ -1,0 +1,2 @@
+timestamp,segment_id,pressure,flow_rate,temperature,pump_speed,energy_consumption,valve_status,pump_state,compressor_state,actual_event_type,predicted_event_type,predicted_confidence,alarm_triggered
+2024-01-01 00:01:00,43,77.21,2.26,31.22,1366.1,35.81,0,1,1,blockage,leak,0.4389814814814814,1
